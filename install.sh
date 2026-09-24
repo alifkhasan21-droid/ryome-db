@@ -63,9 +63,15 @@ else
   command -v cargo >/dev/null 2>&1 ||
     fail "cargo tidak ditemukan. Install Rust dulu: https://rustup.rs"
   say "  (butuh beberapa menit)"
-  # --root ~/.local → binary masuk ~/.local/bin, sama dengan jalur di atas
+  # cargo butuh --root = induk folder bin/, dan tujuan akhirnya harus
+  # mengikuti DBX_INSTALL_DIR seperti jalur unduhan di atas — jadi bangun
+  # dulu ke tempat sementara, lalu salin.
   cargo install --git "https://github.com/$REPO.git" --locked "$BIN" \
-    --root "$HOME/.local"
+    --root "$tmp/cargo"
+  mkdir -p "$INSTALL_DIR"
+  cp "$tmp/cargo/bin/$BIN" "$INSTALL_DIR/$BIN"
+  chmod 755 "$INSTALL_DIR/$BIN"
+  say "✓ terpasang: $INSTALL_DIR/$BIN"
 fi
 
 # ── 4. cek PATH ────────────────────────────────────────────────────────
