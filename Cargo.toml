@@ -1,0 +1,31 @@
+[package]
+name = "dbx"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.80"
+description = "Kelola database di Docker tanpa install ke system"
+license = "MIT"
+
+[dependencies]
+anyhow = "1"
+bollard = "0.21"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+clap = { version = "4", features = ["derive", "env"] }
+clap_complete = "4"
+directories = "6"
+futures-util = "0.3"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "net", "io-util"] }
+toml = "1"
+
+# Sudah ada di tree lewat directories/mio/hyper-util — tidak menambah crate baru.
+# Dipakai untuk mengembalikan perilaku SIGPIPE default (lihat main.rs).
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"

@@ -1,0 +1,24 @@
+name = "elasticsearch"
+aliases = ["es", "elastic"]
+enabled = false              # ubah ke true kalau mau dipakai
+
+image = "docker.elastic.co/elasticsearch/elasticsearch:8.17.0"
+port = 9200
+container_port = 9200
+data_path = "/usr/share/elasticsearch/data"
+
+[env]
+"discovery.type" = "single-node"
+"xpack.security.enabled" = "false"
+ES_JAVA_OPTS = "-Xms512m -Xmx512m"
+
+[healthcheck]
+cmd = ["curl", "-sf", "http://localhost:9200/_cluster/health"]
+interval_secs = 5
+timeout_secs = 5
+retries = 30
+start_period_secs = 10
+
+[client]
+url = "http://{host}:{port}"
+shell = ["bash"]

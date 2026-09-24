@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Format
+        run: cargo fmt --check
+
+      - name: Clippy
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: Test
+        run: cargo test
+
+  # Build binary untuk semua platform yang didukung install.sh.
+  # Hanya jalan pada tag v*, supaya PR/branch biasa tetap cepat.
+  build:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: check
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          - os: macos-15-intel
+            target: x86_64-apple-darwin
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build
+        run: cargo build --release
+
+      # Nama file harus persis `dbx-<target>` — itulah yang di-construct
+      # install.sh: releases/latest/download/dbx-<target>
+      - name: Rename
+        run: cp "target/release/dbx" "dbx-${{ matrix.target }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dbx-${{ matrix.target }}
+          path: dbx-${{ matrix.target }}
+          if-no-files-found: error
+
+  # Terbitkan GitHub Release berisi binary → target unduhan install.sh.
+  # Idempoten: aman dijalankan ulang kalau workflow di-retry.
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [check, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Ambil semua artifact
+        uses: actions/download-artifact@v4
+        with:
+          pattern: dbx-*
+          path: dist
+          merge-multiple: true
+
+      - name: Buat / update release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          ls -l dist
+
+          cd dist
+          sha256sum dbx-* > SHA256SUMS
+          cd ..
+
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 ||
+            gh release create "$GITHUB_REF_NAME" \
+              --title "$GITHUB_REF_NAME" \
+              --generate-notes
+
+          gh release upload "$GITHUB_REF_NAME" dist/* --clobber

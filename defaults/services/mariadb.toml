@@ -1,0 +1,26 @@
+name = "mariadb"
+aliases = ["maria", "mysql"]
+enabled = true
+
+image = "mariadb:11"
+port = 3306
+container_port = 3306
+data_path = "/var/lib/mysql"
+
+[env]
+MARIADB_ROOT_PASSWORD = "root"
+
+[healthcheck]
+cmd = ["healthcheck.sh", "--connect", "--innodb_initialized"]
+interval_secs = 3
+timeout_secs = 3
+retries = 20
+
+[client]
+default_db = "mysql"
+url = "mysql://root:root@{host}:{port}/{db}"
+shell = ["mariadb", "-uroot", "-proot"]
+create_db = ["mariadb", "-uroot", "-proot", "-e", "CREATE DATABASE IF NOT EXISTS `{db}`"]
+dump = ["mariadb-dump", "-uroot", "-proot", "{db}"]
+restore = ["mariadb", "-uroot", "-proot", "{db}"]
+dump_ext = "sql"

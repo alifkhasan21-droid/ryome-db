@@ -1,0 +1,26 @@
+name = "mongodb"
+aliases = ["mongo"]
+enabled = false              # ubah ke true kalau mau dipakai
+
+image = "mongo:8"
+port = 27017
+container_port = 27017
+data_path = "/data/db"
+
+[env]
+MONGO_INITDB_ROOT_USERNAME = "root"
+MONGO_INITDB_ROOT_PASSWORD = "root"
+
+[healthcheck]
+cmd = ["mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+interval_secs = 5
+timeout_secs = 5
+retries = 20
+
+[client]
+default_db = "admin"
+url = "mongodb://root:root@{host}:{port}/{db}?authSource=admin"
+shell = ["mongosh", "-u", "root", "-p", "root", "--authenticationDatabase", "admin", "{db}"]
+dump = ["mongodump", "-u", "root", "-p", "root", "--authenticationDatabase", "admin", "--archive", "--db", "{db}"]
+restore = ["mongorestore", "-u", "root", "-p", "root", "--authenticationDatabase", "admin", "--archive"]
+dump_ext = "archive"

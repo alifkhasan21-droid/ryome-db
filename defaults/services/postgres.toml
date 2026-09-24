@@ -1,0 +1,27 @@
+name = "postgres"
+aliases = ["pg", "postgresql"]
+enabled = true
+
+image = "postgres:17"        # pin versi major, jangan "latest"
+port = 5432                  # port di host
+container_port = 5432
+data_path = "/var/lib/postgresql/data"
+
+[env]
+POSTGRES_USER = "postgres"
+POSTGRES_PASSWORD = "postgres"
+
+[healthcheck]
+cmd = ["pg_isready", "-U", "postgres"]
+interval_secs = 3
+timeout_secs = 3
+retries = 20
+
+[client]
+default_db = "postgres"
+url = "postgresql://postgres:postgres@{host}:{port}/{db}"
+shell = ["psql", "-U", "postgres"]
+create_db = ["psql", "-U", "postgres", "-c", "CREATE DATABASE \"{db}\""]
+dump = ["pg_dump", "-U", "postgres", "{db}"]
+restore = ["psql", "-U", "postgres", "-d", "{db}"]
+dump_ext = "sql"

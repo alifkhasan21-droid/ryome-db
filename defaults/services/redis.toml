@@ -1,0 +1,20 @@
+name = "redis"
+aliases = ["rd"]
+enabled = true
+
+image = "redis:7-alpine"
+port = 6379
+container_port = 6379
+data_path = "/data"
+cmd = ["redis-server", "--appendonly", "yes"]
+
+[healthcheck]
+cmd = ["redis-cli", "ping"]
+interval_secs = 3
+timeout_secs = 3
+retries = 20
+
+[client]
+default_db = "0"
+url = "redis://{host}:{port}/{db}"
+shell = ["redis-cli"]

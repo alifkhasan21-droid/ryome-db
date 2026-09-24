@@ -1,0 +1,36 @@
+# dbx — pengaturan global
+# Lokasi file ini: ~/.config/dbx/config.toml
+# Definisi tiap database ada di folder ./services/*.toml (1 file = 1 database)
+
+# Prefix nama container & volume. Hasil: dbx-postgres, dbx-postgres-data, dst.
+container_prefix = "dbx"
+
+# Docker network bersama. Container lain bisa akses DB lewat nama service
+# (contoh: host "postgres"). Kosongkan ("") kalau nggak mau pakai network khusus.
+network = "dbx"
+
+# Interface tempat port di-publish. "127.0.0.1" = hanya lokal (aman).
+# JANGAN diganti "0.0.0.0" kecuali memang perlu, karena Docker melewati firewall.
+bind_address = "127.0.0.1"
+
+# no | always | unless-stopped | on-failure
+restart_policy = "unless-stopped"
+
+# Otomatis pull image kalau belum ada di lokal
+pull_missing = true
+
+# Kalau port sudah dipakai proses lain, otomatis pilih port kosong
+auto_port = true
+
+# Batas waktu (detik) menunggu DB sehat setelah `dbx up`
+wait_timeout_secs = 90
+
+# Batas waktu (detik) sebelum container di-kill saat `dbx down`
+stop_timeout_secs = 10
+
+# Service yang dinyalakan saat `dbx up` tanpa argumen
+default_services = ["postgres", "redis"]
+
+# Folder hasil `dbx dump`. Kosong = ~/.local/share/dbx/backups
+# Boleh pakai "~/", contoh: "~/backups/db"
+backup_dir = ""
