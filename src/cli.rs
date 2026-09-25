@@ -76,7 +76,13 @@ pub enum Cmd {
     },
 
     /// Buka client interaktif (psql, redis-cli, ...)
-    Sh { service: String },
+    Sh {
+        service: String,
+        /// Argumen tambahan diteruskan apa adanya ke client
+        /// (contoh: dbx sh pg -c "select 1")
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+    },
 
     /// Print connection string
     Url {
@@ -128,4 +134,46 @@ pub enum ConfigCmd {
         /// Nama service; kosong = config.toml
         service: Option<String>,
     },
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clap::Parser;
+
+    /// Argumen setelah nama service harus diteruskan apa adanya, termasuk
+    /// yang diawali `-` (klaim di help: "dbx sh pg -c \"select 1\"").
+    #[test]
+    fn sh_meneruskan_argumen_tambahan() {
+        let cli = Cli::try_parse_from(["dbx", "sh", "pg", "-c", "select 1"]).unwrap();
+        let Cmd::Sh { service, args } = cli.cmd else {
+            panic!("bukan perintah sh");
+        };
+        assert_eq!(service, "pg");
+        assert_eq!(args, ["-c", "select 1"]);
+    }
+
+    #[test]
+    fn sh_tanpa_argumen_tambahan_tetap_interaktif() {
+        let cli = Cli::try_parse_from(["dbx", "sh", "pg"]).unwrap();
+        let Cmd::Sh { service, args } = cli.cmd else {
+            panic!("bukan perintah sh");
+        };
+        assert_eq!(service, "pg");
+        assert!(
+            args.is_empty(),
+            "harus kosong supaya membuka shell interaktif"
+        );
+    }
+
+    /// `--` biasa seharusnya tetap berfungsi sebagai penanda akhir option.
+    #[test]
+    fn sh_menerima_double_dash() {
+        let cli = Cli::try_parse_from(["dbx", "sh", "pg", "--", "-c", "select 1"]).unwrap();
+        let Cmd::Sh { service, args } = cli.cmd else {
+            panic!("bukan perintah sh");
+        };
+        assert_eq!(service, "pg");
+        assert_eq!(args, ["-c", "select 1"]);
+    }
 }

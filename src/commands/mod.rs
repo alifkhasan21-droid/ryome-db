@@ -86,7 +86,7 @@ async fn run_with_ctx(ctx: Ctx, cmd: Cmd) -> Result<()> {
             tail,
         } => status::logs(&ctx, &service, follow, &tail).await,
 
-        Cmd::Sh { service } => client::sh(&ctx, &service).await,
+        Cmd::Sh { service, args } => client::sh(&ctx, &service, &args).await,
 
         Cmd::Url { service, db } => client::url(&ctx, &service, db).await,
 

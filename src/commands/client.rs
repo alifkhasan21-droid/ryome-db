@@ -11,7 +11,7 @@ use std::{
     process::Stdio,
 };
 
-pub(super) async fn sh(ctx: &Ctx, service: &str) -> Result<()> {
+pub(super) async fn sh(ctx: &Ctx, service: &str, args: &[String]) -> Result<()> {
     let s = ctx.reg.find(service)?;
     if s.client.shell.is_empty() {
         bail!(
@@ -21,10 +21,9 @@ pub(super) async fn sh(ctx: &Ctx, service: &str) -> Result<()> {
         );
     }
     let container = ctx.engine().await?.require_running(s).await?;
-    exec::interactive(
-        &container,
-        &exec::expand(&s.client.shell, &s.client.default_db),
-    )
+    let mut cmd = exec::expand(&s.client.shell, &s.client.default_db);
+    cmd.extend_from_slice(args);
+    exec::interactive(&container, &cmd)
 }
 
 pub(super) async fn url(ctx: &Ctx, service: &str, db: Option<String>) -> Result<()> {
