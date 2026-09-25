@@ -227,7 +227,12 @@ Push tag `v*` (mis. `v0.1.0`) akan memicu build release multi-platform otomatis.
 ```
 src/main.rs       entry point (+ penanganan SIGPIPE untuk pipe ke | head)
 src/cli.rs        definisi command (clap)
-src/commands.rs   implementasi tiap command
+src/commands/     implementasi tiap command, dipecah per domain:
+  mod.rs            dispatch + Ctx + helper bersama + test
+  lifecycle.rs      up / down / restart / rm  (mulai, stop, buat ulang)
+  status.rs         ls / logs                 (lihat kondisi)
+  client.rs         sh / url / createdb / dump / restore  (bicara ke DB)
+  setup.rs          init / config / doctor / completions  (tanpa config valid)
 src/config.rs     config.toml + lokasi folder + init
 src/service.rs    parsing services/*.toml
 src/docker.rs     bollard: up/stop/rm/status/logs/wait siap + drift check
